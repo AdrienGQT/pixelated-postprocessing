@@ -2,22 +2,19 @@ uniform float uColorDepth;
 uniform float uGridResolution;
 uniform vec2 uResolution;
 
-void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+void mainUv(inout vec2 uv) {
     float gridResolution = uGridResolution;
-
     float aspect = uResolution.x / uResolution.y;
 
-    vec2 squareUv = uv;
-    squareUv.x *= aspect;
+    uv.x *= aspect;
+    uv = floor(uv * gridResolution) / gridResolution;
+    uv.x /= aspect;
+}
 
-    vec2 customUv = floor(squareUv * gridResolution) / gridResolution;
-    customUv.x /= aspect;
+void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+    vec4 color = inputColor;
 
-    vec4 color = texture2D(inputBuffer, customUv);
+    color.rgb = floor(color.rgb * uColorDepth) / uColorDepth;
 
-    color.x = floor(color.x * uColorDepth) / uColorDepth;
-    color.y = floor(color.y * uColorDepth) / uColorDepth;
-    color.z = floor(color.z * uColorDepth) / uColorDepth;
-
-    outputColor = color;
+    outputColor = vec4(color.rgb, color.a);
 }

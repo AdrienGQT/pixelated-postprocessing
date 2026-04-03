@@ -1,6 +1,6 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { EffectComposer } from "@react-three/postprocessing";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import PixelatedEffect from "./PixelatedEffect";
 
 export default function App() {
@@ -14,7 +14,7 @@ export default function App() {
         >
             <OrbitControls />
 
-            <ambientLight args={[0xffffff, 0.5]} castShadow />
+            <ambientLight args={[0xffffff, 0.5]} />
             <directionalLight position={[3, 3, 3]} castShadow />
 
             <mesh position={[0, 0, 2]} castShadow receiveShadow>
@@ -29,7 +29,7 @@ export default function App() {
 
             <mesh position={[-2, 0, -1]} castShadow receiveShadow>
                 <torusKnotGeometry args={[0.5]} />
-                <meshStandardMaterial color="orange" />
+                <meshStandardMaterial emissive="orange" emissiveIntensity={3} />
             </mesh>
 
             <mesh
@@ -42,6 +42,7 @@ export default function App() {
             </mesh>
 
             <EffectComposer>
+                <Bloom intensity={1.0} luminanceThreshold={1.0} mipmapBlur />
                 <PixelatedEffect colorDepth={32} gridResolution={128} />
             </EffectComposer>
         </Canvas>

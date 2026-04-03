@@ -1,4 +1,4 @@
-import { Effect } from "postprocessing";
+import { Effect, BlendFunction } from "postprocessing";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
@@ -9,6 +9,7 @@ export default function PixelatedEffect({
 }) {
     const effect = useMemo(() => {
         return new Effect("PixelatedEffect", fragmentShader, {
+            blendFunction: BlendFunction.NORMAL,
             uniforms: new Map([
                 ["uColorDepth", new THREE.Uniform(colorDepth)],
                 ["uGridResolution", new THREE.Uniform(gridResolution)],
