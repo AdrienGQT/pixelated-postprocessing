@@ -1,16 +1,87 @@
-# React + Vite
+# Pixelated postprocessing
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Pixelated postprocessing effect using R3F, `Effect` class from processing library and a custom GLSL fragment shader. The effect can be applied by adding the `PixelatedEffect.jsx` component into an `EffectComposer` from @react-three/postprocessing library
 
-Currently, two official plugins are available:
+## Code
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### React component (JSX)
 
-## React Compiler
+```js
+import { Effect } from "postprocessing";
+import fragmentShader from "./shaders/fragmentShader.glsl?raw";
+import { useEffect, useMemo } from "react";
+import * as THREE from "three";
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+export default function PixelatedEffect({
+    colorDepth = 64,
+    gridResolution = 128,
+}) {
+    const effect = useMemo(() => {
+        return new Effect("PixelatedEffect", fragmentShader, {
+            uniforms: new Map([
+                ["uColorDepth", new THREE.Uniform(colorDepth)],
+                ["uGridResolution", new THREE.Uniform(gridResolution)],
+                [
+                    "uResolution",
+                    new THREE.Uniform(
+                        new THREE.Vector2(
+                            window.innerWidth,
+                            window.innerHeight,
+                        ),
+                    ),
+                ],
+            ]),
+        });
+    });
 
-## Expanding the ESLint configuration
+    useEffect(() => {
+        const onResize = () => {
+            const uResolution = effect.uniforms.get("uResolution");
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+            if (uResolution) {
+                uResolution.value.set(window.innerWidth, window.innerHeight);
+            }
+        };
+
+        window.addEventListener("resize", onResize);
+
+        return () => window.removeEventListener("resize", onResize);
+    }, [effect]);
+
+    return <primitive object={effect} />;
+}
+
+```
+
+### Fragment Shader (GLSL)
+
+```glsl
+uniform float uColorDepth;
+uniform float uGridResolution;
+uniform vec2 uResolution;
+
+void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+    float gridResolution = uGridResolution;
+
+    float aspect = uResolution.x / uResolution.y;
+
+    vec2 squareUv = uv;
+    squareUv.x *= aspect;
+
+    vec2 customUv = floor(squareUv * gridResolution) / gridResolution;
+    customUv.x /= aspect;
+
+    vec4 color = texture2D(inputBuffer, customUv);
+
+    color.x = floor(color.x * uColorDepth) / uColorDepth;
+    color.y = floor(color.y * uColorDepth) / uColorDepth;
+    color.z = floor(color.z * uColorDepth) / uColorDepth;
+
+    outputColor = color;
+}
+```
+
+## Demo
+
+Try the demo here: 
+https://pixelated-postprocessing.vercel.app/
